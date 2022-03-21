@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "574426348268",
+    "project_id": "swiftuichat-e7d15",
+    "storage_bucket": "swiftuichat-e7d15.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:574426348268:android:a32504a20d79b5e48e43c9",
+        "android_client_info": {
+          "package_name": "com.example.ichatcompose"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "574426348268-fepetvpmmqupefge1v8ahl55jujpj9nn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAudGv4qYSV9WuJL-aZ5H5zl_tvs4TloRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "574426348268-fepetvpmmqupefge1v8ahl55jujpj9nn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "574426348268-fepr0v3b4tqbnh37cbevfkq7e39s6pcp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.renan.iChat"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
