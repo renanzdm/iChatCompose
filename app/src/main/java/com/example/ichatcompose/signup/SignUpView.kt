@@ -1,19 +1,14 @@
-import android.Manifest
-import android.app.Activity
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.provider.MediaStore
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,34 +18,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import coil.compose.rememberImagePainter
 import com.example.ichatcompose.R
+import com.example.ichatcompose.main.navigation.Router
 import com.example.ichatcompose.signup.SignUpViewModel
 import com.example.ichatcompose.ui.theme.backgroundColor
 import com.example.ichatcompose.ui.theme.greenColor
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SignUpView(signUpViewModel: SignUpViewModel,register: ActivityResultLauncher<Intent>) {
-    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
-    )
-    val coroutineScope = rememberCoroutineScope()
-    BottomSheetScaffold(
-        scaffoldState = bottomSheetScaffoldState,
-        sheetContent = {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            ) {
-                Text(text = "CONTEUDO BOTTOM SHEET")
-            }
-        }, sheetPeekHeight = 0.dp
-    ) {
+fun SignUpView(signUpViewModel: SignUpViewModel, router: Router<*>) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -60,15 +37,14 @@ fun SignUpView(signUpViewModel: SignUpViewModel,register: ActivityResultLauncher
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState())
         ) {
-
-            profilePhoto(signUpViewModel, register = register)
+            profilePhoto(signUpViewModel)
             TextFields(signUpViewModel = signUpViewModel)
             Box(
                 modifier = Modifier
                     .height(10.dp)
             )
-            val loading = signUpViewModel.isLoading.observeAsState(initial = false)
-            val error = signUpViewModel.errorText.observeAsState("")
+            val loading = signUpViewModel.isLoading.collectAsState(initial = false)
+            val error = signUpViewModel.errorText.collectAsState("")
             if (error.value.isNotEmpty()) Toast.makeText(
                 LocalContext.current,
                 error.value,
@@ -80,50 +56,44 @@ fun SignUpView(signUpViewModel: SignUpViewModel,register: ActivityResultLauncher
 
         }
 
-    }
+
 }
 
 
-
-
-
 @Composable
-fun profilePhoto(signUpViewModel: SignUpViewModel,register: ActivityResultLauncher<Intent>) {
-    val profilePhoto = signUpViewModel.profilePhoto.observeAsState(initial = Uri.EMPTY)
+fun profilePhoto(signUpViewModel: SignUpViewModel) {
+    var myImage = signUpViewModel.profilePhoto.collectAsState(Uri.EMPTY)
+    val EMPTY_IMAGE_URI: Uri = Uri.parse("file://dev/null")
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            signUpViewModel.setProfilePhoto(uri ?: EMPTY_IMAGE_URI)
+        })
     Box(modifier = Modifier
+        .height(200.dp)
+        .width(200.dp)
         .clip(CircleShape)
         .clickable {
-            var gallery = Intent(
-                Intent.ACTION_PICK,
-                MediaStore.Images.Media.INTERNAL_CONTENT_URI
-            )
-
-            register.launch(gallery)
-
+        launcher.launch("image/*")
         }) {
-        if (profilePhoto.value.toString().isEmpty()) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_baseline_add_a_photo_24),
-                contentDescription = "Profile Photo",
+        if (myImage.value.path?.isNotEmpty() == true) Image(
+            painter = rememberImagePainter(myImage.value),
+            contentDescription = "Profile Photo",
+             contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .height(200.dp)
-                    .width(200.dp)
-                    .clip(
-                        CircleShape
-                    )
-                    .background(greenColor)
-                    .padding(40.dp)
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.chat_logo),
-                contentDescription = "Logo",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .border(width = 3.dp, color = Color.Gray)
-            )
-        }
+                .background(greenColor)
+
+
+        ) else Image(
+            painter = painterResource(id = R.drawable.ic_baseline_add_a_photo_24),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+                .background(greenColor)
+                .padding(32.dp)
+        )
+
     }
 
 
@@ -131,9 +101,9 @@ fun profilePhoto(signUpViewModel: SignUpViewModel,register: ActivityResultLaunch
 
 @Composable
 fun TextFields(signUpViewModel: SignUpViewModel) {
-    val email = signUpViewModel.email.observeAsState(initial = "")
-    val password = signUpViewModel.password.observeAsState(initial = "")
-    val name = signUpViewModel.name.observeAsState(initial = "")
+    val email = signUpViewModel.email.collectAsState(initial = "")
+    val password = signUpViewModel.password.collectAsState(initial = "")
+    val name = signUpViewModel.name.collectAsState(initial = "")
 
     OutlinedTextField(
         value = name.value,
@@ -177,6 +147,18 @@ fun TextFields(signUpViewModel: SignUpViewModel) {
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
     )
+    OutlinedTextField(
+        value = name.value,
+        onValueChange = {
+            signUpViewModel.setName(it)
+        },
+        shape = RoundedCornerShape(24.dp),
+        label = { Text("Name") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+    )
+
 }
 
 @Composable

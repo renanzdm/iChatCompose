@@ -1,30 +1,30 @@
 package com.example.ichatcompose.signup
 
+import android.graphics.Bitmap
 import android.net.Uri
-import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
-import dagger.hilt.android.scopes.ActivityRetainedScoped
-import java.util.*
-import kotlin.concurrent.timerTask
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-@ActivityRetainedScoped
-class SignUpViewModel : ViewModel() {
+@HiltViewModel
+class SignUpViewModel @Inject constructor() :  ViewModel()  {
     private lateinit var auth: FirebaseAuth
-    private val _email: MutableLiveData<String> = MutableLiveData("")
-    var email: LiveData<String> = _email
-    private val _password: MutableLiveData<String> = MutableLiveData("")
-    var password: LiveData<String> = _password
-    private val _name: MutableLiveData<String> = MutableLiveData("")
-    var name: LiveData<String> = _name
-    private val _isLoading: MutableLiveData<Boolean> = MutableLiveData(false)
-    var isLoading: LiveData<Boolean> = _isLoading
-    private val _errorText: MutableLiveData<String> = MutableLiveData("")
-    var errorText: LiveData<String> = _errorText
-    private val _profilePhoto: MutableLiveData<Uri> = MutableLiveData(Uri.EMPTY)
-    var profilePhoto : LiveData<Uri> = _profilePhoto
+    private val _email: MutableStateFlow<String> = MutableStateFlow("")
+    var email: StateFlow<String> = _email
+    private val _password: MutableStateFlow<String> = MutableStateFlow("")
+    var password: StateFlow<String> = _password
+    private val _name: MutableStateFlow<String> = MutableStateFlow("")
+    var name: StateFlow<String> = _name
+    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    var isLoading: StateFlow<Boolean> = _isLoading
+    private val _errorText: MutableStateFlow<String> = MutableStateFlow("")
+    var errorText: StateFlow<String> = _errorText
+    private val _profilePhoto: MutableStateFlow<Uri> = MutableStateFlow(Uri.EMPTY)
+    var profilePhoto : StateFlow<Uri> = _profilePhoto
+
 
 
 
@@ -38,23 +38,33 @@ class SignUpViewModel : ViewModel() {
     fun setName(name: String) {
         _name.value = name
     }
-    fun setProfilePhoto(path: Uri) {
-        _profilePhoto.value = path
+    fun setProfilePhoto(image: Uri) {
+        _profilePhoto.value = image
     }
     fun signUp(){
         _isLoading.value = true
         auth = FirebaseAuth.getInstance()
-        if (!_email.value.isNullOrEmpty() && !_password.value.isNullOrEmpty())
-        auth.createUserWithEmailAndPassword(_email.value!!, _password.value!!).addOnCompleteListener {
-            if (it.isSuccessful){
-            }else{
-                _errorText.postValue(it.exception.toString())
-                println(it.exception)
+        if (_email.value.isNotEmpty() && _password.value.isNotEmpty()) {
+            auth.createUserWithEmailAndPassword(_email.value,
+                _password.value
+            ).addOnCompleteListener { task ->
+                when {
+                    task.isSuccessful -> {
+
+                    }
+                    else -> {
+                        _errorText.value = task.exception.toString()
+                        println(task.exception)
+                    }
+                }
             }
         }
         _isLoading.value = false
 
     }
+
+
+
 
 
 }

@@ -1,71 +1,58 @@
 package com.example.ichatcompose
 
-import SignUpView
-import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.Composable
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Surface
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.ichatcompose.signIn.SignInView
-import com.example.ichatcompose.signIn.SignInViewModel
-import com.example.ichatcompose.signup.SignUpViewModel
-import com.example.ichatcompose.ui.theme.IChatComposeTheme
-import com.google.firebase.FirebaseApp
+import com.example.ichatcompose.main.navigation.MainNavigation
+import com.example.ichatcompose.main.navigation.RouterImpl
+import com.example.ichatcompose.main.viewModel.MainViewModel
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.firebase.FirebaseApp.initializeApp
 import dagger.hilt.android.AndroidEntryPoint
 
-
+@ExperimentalFoundationApi
+@ExperimentalMaterialApi
+@ExperimentalComposeUiApi
+@ExperimentalAnimationApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val signInViewModel: SignInViewModel by viewModels()
-    private val signUpViewModel: SignUpViewModel by viewModels()
+
+    private val mainViewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this)
+        initializeApp(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            MainView(signInViewModel = signInViewModel, signUpViewModel = signUpViewModel, register = register)
-        }
-    }
-
-    private val register = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        println(result.data?.data!!)
-        signUpViewModel.setProfilePhoto(result.data?.data!!)
-    }
-
-
-}
-
-
-
-@Composable
-fun MainView(signInViewModel: SignInViewModel, signUpViewModel: SignUpViewModel,register: ActivityResultLauncher<Intent>) {
-    IChatComposeTheme {
-        val navController = rememberNavController()
-        NavHost(navController, startDestination = "sign_in") {
-            composable(
-                "sign_in",
-            ) {
-                SignInView(
-                    signInViewModel = signInViewModel,
-                    navController = navController
-                )
+            val navController = rememberAnimatedNavController()
+            mainViewModel.router = RouterImpl(navController)
+            Surface(modifier = Modifier.fillMaxSize()) {
+                MainNavigation(viewModel = mainViewModel)
             }
-            composable("sign_up") { SignUpView(signUpViewModel = signUpViewModel,register=register) }
         }
 
+//  registerForActivityResult(
+//            ActivityResultContracts.StartActivityForResult()
+//        ) { result: ActivityResult ->
+//            println(result.data?.data!!)
+//        }
 
     }
+
+
 }
+
+
+
 
